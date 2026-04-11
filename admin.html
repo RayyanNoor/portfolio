@@ -1,0 +1,228 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Rayan</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="admin-page">
+  <header class="topbar">
+    <div class="shell">
+      <a class="brand" href="./index.html">
+        <span id="navName" class="name">Rayan</span>
+        <span class="role">Portfolio</span>
+      </a>
+      <button id="menuButton" class="menu-button" type="button">Menu</button>
+      <nav id="mainNav" class="nav">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="#admin-overview">Overview</a>
+        <a class="nav-link" href="#admin-profile">Profile</a>
+        <a class="nav-link" href="#admin-projects">Projects</a>
+        <a class="nav-link" href="#admin-editor">Editor</a>
+        <button id="adminLogoutBtn" class="button ghost admin-logout" type="button">Logout</button>
+        <div class="theme-switch" role="group" aria-label="Theme mode">
+          <button class="theme-btn" type="button" data-theme-mode="system">System</button>
+          <button class="theme-btn" type="button" data-theme-mode="dark">Dark</button>
+          <button class="theme-btn" type="button" data-theme-mode="light">Light</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="shell admin-layout">
+      <section id="admin-overview" class="panel section section-anchor">
+        <div class="section-head">
+          <h2>Admin Dashboard</h2>
+          <p>Update profile details and manage projects without touching code.</p>
+        </div>
+        <div class="button-row">
+          <button id="toggleEditMode" class="button primary" type="button">Enable Edit Mode</button>
+          <span id="editModeState" class="muted">View mode: editing is locked.</span>
+        </div>
+        <p id="adminSaveBanner" class="admin-save-banner" aria-live="polite"></p>
+        <p class="muted">This dashboard stores changes in your browser using localStorage. For deployment, update the defaults in <code>scripts/data.js</code> after finalizing content.</p>
+      </section>
+
+      <section id="admin-profile" class="panel section section-anchor">
+        <div class="section-head">
+          <h2>Profile Information</h2>
+        </div>
+        <form id="profileForm" class="form-grid">
+          <div class="form-grid two">
+            <label>Name
+              <input type="text" name="name" required>
+            </label>
+            <label>Top Role Label
+              <input type="text" name="navRole" required>
+            </label>
+          </div>
+
+          <div class="form-grid two">
+            <label>Hero Eyebrow
+              <input type="text" name="heroEyebrow" required>
+            </label>
+            <label>Hero Heading Suffix
+              <input type="text" name="heroHeadingSuffix" required>
+            </label>
+          </div>
+
+          <div class="form-grid two">
+            <label>Role
+              <input type="text" name="role" required>
+            </label>
+            <label>Top Technologies (comma separated)
+              <input type="text" name="heroTechs" placeholder="TypeScript, React, Node.js" required>
+            </label>
+          </div>
+
+          <label>Headline
+            <input type="text" name="headline" required>
+          </label>
+
+          <label>Short About
+            <textarea name="aboutShort" required></textarea>
+          </label>
+
+          <label>Long About
+            <textarea name="aboutLong" required></textarea>
+          </label>
+
+          <div class="form-grid two">
+            <label>Email
+              <input type="email" name="email" required>
+            </label>
+            <label>WhatsApp Number (country code + number)
+              <input type="text" name="whatsapp" required>
+            </label>
+          </div>
+
+          <div class="form-grid two">
+            <label>GitHub URL
+              <input type="url" name="github" required>
+            </label>
+            <label>Location
+              <input type="text" name="location" required>
+            </label>
+          </div>
+
+          <div class="form-grid two">
+            <label>Footer Left Text
+              <input type="text" name="footerLead" required>
+            </label>
+            <label>Footer Right Text
+              <input type="text" name="footerNote" required>
+            </label>
+          </div>
+
+          <label>Profile Image Upload
+            <input id="profileImageFile" type="file" accept="image/*">
+          </label>
+
+          <div class="admin-profile-preview">
+            <img id="profileImagePreview" src="./assets/profile-placeholder.svg" alt="Profile image preview">
+          </div>
+
+          <input id="profileImage" type="hidden" name="profileImage">
+
+          <div class="button-row">
+            <button class="button primary" type="submit">Save Profile</button>
+            <button id="resetData" class="button danger" type="button">Reset All Data</button>
+          </div>
+        </form>
+
+        <hr class="admin-separator">
+
+        <div class="section-head">
+          <h2>Security</h2>
+          <p>Change your admin passkey after logging in.</p>
+        </div>
+        <form id="passkeyForm" class="form-grid">
+          <div class="form-grid two">
+            <label>Current Passkey
+              <input id="currentPasskey" type="password" autocomplete="current-password" required>
+            </label>
+            <label>New Passkey
+              <input id="newPasskey" type="password" autocomplete="new-password" required>
+            </label>
+          </div>
+          <label>Confirm New Passkey
+            <input id="confirmPasskey" type="password" autocomplete="new-password" required>
+          </label>
+          <div class="button-row">
+            <button id="changePasskeyBtn" class="button primary" type="submit">Change Passkey</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="admin-projects" class="panel section section-anchor">
+        <div class="section-head">
+          <h2>Projects</h2>
+          <p>Add new projects or edit existing entries.</p>
+        </div>
+        <div id="projectList" class="form-grid"></div>
+      </section>
+
+      <section id="admin-editor" class="panel section section-anchor">
+        <div class="section-head">
+          <h2>Add / Edit Project</h2>
+        </div>
+        <form id="projectForm" class="form-grid">
+          <input id="projectId" type="hidden">
+
+          <label>Project Title
+            <input id="projectTitle" type="text" required>
+          </label>
+
+          <label>Description
+            <textarea id="projectDescription" required></textarea>
+          </label>
+
+          <label>Languages (comma separated)
+            <input id="projectLanguages" type="text" placeholder="HTML, CSS, JavaScript" required>
+          </label>
+
+          <label>Manual image URLs or paths (optional, one per line)
+            <textarea id="projectScreenshots" placeholder="./assets/project-1.png&#10;./assets/project-2.png"></textarea>
+          </label>
+
+          <div class="form-grid two">
+            <label>Screenshot Uploads (you can select multiple files)
+              <input id="projectScreenshotFiles" type="file" accept="image/*" multiple>
+            </label>
+            <label>Repository URL
+              <input id="projectRepo" type="url" required>
+            </label>
+          </div>
+
+          <p id="projectScreenshotCount" class="muted">0 screenshots selected</p>
+          <div id="projectScreenshotPreview" class="admin-shot-preview" aria-live="polite"></div>
+
+          <label class="toggle">
+            <input id="projectFeatured" type="checkbox">
+            <span class="toggle-ui" aria-hidden="true"></span>
+            <span>Featured on home page</span>
+          </label>
+
+          <div class="button-row">
+            <button class="button primary" type="submit"><span id="saveProjectLabel">Add Project</span></button>
+            <button id="clearProjectForm" class="button ghost" type="button">Clear Form</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">Admin mode for content updates.</div>
+  </footer>
+
+  <p id="adminNotice" class="notice" role="status" aria-live="polite"></p>
+
+  <script src="./scripts/data.js"></script>
+  <script src="./scripts/auth.js"></script>
+  <script src="./scripts/app.js"></script>
+  <script src="./scripts/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" fill="none">
+  <rect width="1200" height="760" rx="24" fill="#121824"/>
+  <rect x="44" y="44" width="520" height="672" rx="18" fill="#1E2738"/>
+  <rect x="592" y="44" width="564" height="180" rx="18" fill="#22314A"/>
+  <rect x="592" y="248" width="564" height="228" rx="18" fill="#22314A"/>
+  <rect x="592" y="500" width="564" height="216" rx="18" fill="#22314A"/>
+  <text x="612" y="112" fill="#A2B4CC" font-family="Segoe UI, Arial" font-size="34">Replace with real UI screenshot</text>
+</svg>

@@ -1,0 +1,62 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Rayan</title>
+  <meta name="description" content="Secure admin access for portfolio management.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell">
+      <a class="brand" href="./index.html" aria-label="Go to home">
+        <span class="name">Rayan</span>
+        <span class="role">Admin Access</span>
+      </a>
+      <nav class="nav" aria-label="Admin login navigation">
+        <a class="nav-link" href="index.html">Home</a>
+        <div class="theme-switch" role="group" aria-label="Theme mode">
+          <button class="theme-btn" type="button" data-theme-mode="system">System</button>
+          <button class="theme-btn" type="button" data-theme-mode="dark">Dark</button>
+          <button class="theme-btn" type="button" data-theme-mode="light">Light</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="shell auth-shell">
+      <section class="panel section auth-panel reveal in-view">
+        <div class="section-head">
+          <h2>Admin Login</h2>
+          <p>Enter your admin passcode to open the dashboard.</p>
+        </div>
+
+        <form id="adminLoginForm" class="form-grid auth-form">
+          <label for="adminPasscode">Passcode
+            <input id="adminPasscode" name="passcode" type="password" autocomplete="current-password" required>
+          </label>
+          <div class="button-row">
+            <button class="button primary" type="submit">Enter Dashboard</button>
+            <a class="button ghost" href="index.html">Back to Home</a>
+          </div>
+        </form>
+
+        <p id="adminLoginMessage" class="muted auth-message" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-inner">
+      <span class="muted">Admin access gate enabled.</span>
+      <a class="admin-link" href="index.html">Public Site</a>
+    </div>
+  </footer>
+
+  <script src="./scripts/data.js"></script>
+  <script src="./scripts/auth.js"></script>
+  <script src="./scripts/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" fill="none">
+  <rect width="1200" height="760" rx="24" fill="#111A2A"/>
+  <rect x="38" y="38" width="1124" height="84" rx="14" fill="#1A2740"/>
+  <rect x="38" y="152" width="740" height="570" rx="14" fill="#1A2740"/>
+  <rect x="808" y="152" width="354" height="268" rx="14" fill="#203150"/>
+  <rect x="808" y="454" width="354" height="268" rx="14" fill="#203150"/>
+  <text x="60" y="92" fill="#90A6C3" font-family="Segoe UI, Arial" font-size="34">Project Screenshot Placeholder</text>
+</svg>

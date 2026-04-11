@@ -1,47 +1,209 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rayan | Portfolio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <title>Rayan | Software Engineer</title>
+  <meta name="description" content="Rayan's engineering portfolio: production-ready systems, polished UI, and reliable software delivery.">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
-  <div class="bg-shape shape-a" aria-hidden="true"></div>
-  <div class="bg-shape shape-b" aria-hidden="true"></div>
+<body class="client-page">
+  <a class="skip-link" href="#mainContent">Skip to content</a>
 
-  <header class="hero">
-    <p class="kicker">Portfolio</p>
-    <h1>Rayan</h1>
-    <p class="tagline">I design and build useful, creative products on the web.</p>
-    <a class="btn primary" href="https://github.com/RayyanNoor/portfolio" target="_blank" rel="noreferrer">View This Repo</a>
+  <header class="topbar">
+    <div class="shell">
+      <a class="brand" href="#home" aria-label="Go to top">
+        <span id="navName" class="name">Rayan</span>
+        <span id="navRole" class="role">Software Engineer</span>
+      </a>
+
+      <button id="menuButton" class="menu-button" type="button" aria-label="Toggle navigation">Menu</button>
+
+      <nav id="mainNav" class="nav" aria-label="Main navigation">
+        <a class="nav-link" href="#home">Home</a>
+        <a class="nav-link" href="#about">About</a>
+        <a class="nav-link" href="#projects">Projects</a>
+        <a class="nav-link" href="#console">Console</a>
+        <a class="nav-link" href="#contact">Contact</a>
+        <div class="theme-switch" role="group" aria-label="Theme mode">
+          <button class="theme-btn" type="button" data-theme-mode="system">System</button>
+          <button class="theme-btn" type="button" data-theme-mode="dark">Dark</button>
+          <button class="theme-btn" type="button" data-theme-mode="light">Light</button>
+        </div>
+      </nav>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="about">
-      <h2>About Me</h2>
-      <p>
-        I am a developer focused on clean engineering, expressive UI, and practical outcomes.
-        I like transforming ideas into polished, usable products.
-      </p>
-    </section>
+  <main id="mainContent" class="main">
+    <div class="shell">
+      <section id="home" class="hero reveal section-anchor">
+        <div class="panel hero-copy">
+          <p id="heroEyebrow" class="eyebrow">AVAILABLE FOR FREELANCE + CONTRACT</p>
+          <h1><span id="heroName">Rayan</span> <span id="heroHeadingSuffix">builds software that ships.</span></h1>
+          <p id="heroRole" class="kicker">Full-Stack Developer</p>
+          <p id="heroHeadline" class="subtitle">I design and implement production-ready products with clean architecture, fast performance, and premium user experience.</p>
+          <div class="button-row">
+            <a class="button primary" href="#projects">Explore Projects</a>
+            <a class="button ghost" href="#contact">Hire Me</a>
+            <a class="button secondary" data-profile="github" href="https://github.com/RayyanNoor" target="_blank" rel="noreferrer">github.com/RayyanNoor</a>
+          </div>
+        </div>
 
-    <section class="projects">
-      <div class="section-head">
-        <h2>Projects</h2>
-        <p>Selected work with short descriptions and direct GitHub links.</p>
-      </div>
-      <div id="projectGrid" class="project-grid"></div>
-    </section>
+        <div class="panel hero-side">
+          <img id="heroImage" src="./assets/profile-placeholder.svg" alt="Rayan profile picture" class="hero-image">
+          <div class="status-block">
+            <span class="dot"></span>
+            <span>Open to new projects</span>
+          </div>
+          <div id="languageCloud" class="chip-cloud"></div>
+        </div>
+      </section>
+
+      <section class="metrics reveal">
+        <article class="metric-card panel">
+          <p>Projects Built</p>
+          <strong id="metricProjects" data-target="0">0</strong>
+        </article>
+        <article class="metric-card panel">
+          <p>Tech Stacks</p>
+          <strong id="metricStacks" data-target="0">0</strong>
+        </article>
+        <article class="metric-card panel">
+          <p>Featured Projects</p>
+          <strong id="metricFeatured" data-target="0">0</strong>
+        </article>
+        <article class="metric-card panel">
+          <p>Response SLA</p>
+          <strong>24h</strong>
+        </article>
+      </section>
+
+      <section id="about" class="panel section reveal section-anchor">
+        <div class="section-head">
+          <h2>Engineering Profile</h2>
+          <p id="aboutShort">I focus on clean architecture, performance, and user-first design.</p>
+        </div>
+
+        <p id="aboutLong" class="muted"></p>
+
+        <div class="grid-3 value-grid">
+          <article class="value-card">
+            <h3>System Thinking</h3>
+            <p>I break features into scalable modules that are easy to extend and maintain.</p>
+          </article>
+          <article class="value-card">
+            <h3>Delivery Discipline</h3>
+            <p>I ship fast while protecting code quality using structure, review, and validation.</p>
+          </article>
+          <article class="value-card">
+            <h3>Business Alignment</h3>
+            <p>I connect engineering decisions to product goals and client outcomes.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="projects" class="panel section reveal section-anchor">
+        <div class="section-head">
+          <h2>Project Explorer</h2>
+          <p>Search, filter, and inspect project details. This section is interactive.</p>
+        </div>
+
+        <div class="explorer-tools">
+          <label class="search-wrap" for="projectSearch">
+            <span>Search</span>
+            <input id="projectSearch" type="search" placeholder="Search by title, language, or description" autocomplete="off">
+          </label>
+
+          <div class="sort-wrap">
+            <span>Sort</span>
+            <div id="projectSortPills" class="sort-pills" role="group" aria-label="Sort projects">
+              <button class="sort-pill active" type="button" data-sort="featured">Featured</button>
+              <button class="sort-pill" type="button" data-sort="title-asc">A-Z</button>
+              <button class="sort-pill" type="button" data-sort="title-desc">Z-A</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="stackFilters" class="stack-filters" aria-label="Language filters"></div>
+
+        <div id="projectsGrid" class="project-grid"></div>
+        <div id="projectsPagination" class="projects-pagination" aria-label="Projects pagination"></div>
+        <p id="projectEmpty" class="muted empty-state" hidden>No projects match this filter yet.</p>
+      </section>
+
+      <section id="console" class="panel section reveal section-anchor">
+        <div class="section-head">
+          <h2>Command Console</h2>
+          <p>Type commands to navigate and contact quickly. Try: <code>help</code>, <code>projects</code>, <code>contact</code>, <code>email</code>, <code>whatsapp</code>, <code>github</code>.</p>
+        </div>
+
+        <div class="console-wrap" role="region" aria-label="Portfolio command console">
+          <div id="consoleOutput" class="console-output" aria-live="polite"></div>
+          <form id="consoleForm" class="console-input-row">
+            <label for="consoleInput" class="sr-only">Command input</label>
+            <span class="prompt">rayan@portfolio:~$</span>
+            <input id="consoleInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command and press Enter">
+          </form>
+        </div>
+      </section>
+
+      <section id="contact" class="panel section reveal section-anchor">
+        <div class="section-head">
+          <h2>Contact</h2>
+          <p>Let’s discuss your project scope, timeline, and delivery plan.</p>
+        </div>
+
+        <article class="contact-card">
+          <img id="contactImage" src="./assets/profile-placeholder.svg" alt="Rayan profile picture">
+          <div>
+            <h3 id="contactName">Rayan</h3>
+            <p id="contactRole" class="muted">Full-Stack Developer</p>
+            <p id="contactLocation" class="muted">Riyadh, Saudi Arabia</p>
+
+            <div class="contact-links">
+              <a class="button primary" data-profile="whatsapp" href="https://wa.me/966500000000" target="_blank" rel="noreferrer">WhatsApp</a>
+              <a class="button ghost" data-profile="email" href="mailto:rayan@example.com">Email</a>
+              <button id="copyEmailBtn" class="button secondary" type="button">Copy Email</button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
   </main>
 
   <footer class="footer">
-    <a href="https://github.com/RayyanNoor" target="_blank" rel="noreferrer">github.com/RayyanNoor</a>
+    <div class="shell footer-inner">
+      <span id="footerLead">Built by Rayan.</span>
+      <span id="footerNote" class="muted">Production-ready portfolio</span>
+    </div>
   </footer>
 
-  <script src="./script.js"></script>
+  <div id="projectModal" class="project-modal" hidden>
+    <div class="project-modal-backdrop" data-modal-close></div>
+    <article class="project-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="projectModalClose" class="project-modal-close" type="button" aria-label="Close project preview">x</button>
+      <div class="project-modal-grid">
+        <section class="project-modal-media">
+          <img id="modalImage" src="./assets/project-placeholder-1.svg" alt="Project preview">
+          <div class="modal-media-controls">
+            <button id="modalPrev" class="gallery-btn" type="button" aria-label="Previous image">&lt;</button>
+            <div id="modalThumbs" class="modal-thumbs"></div>
+            <button id="modalNext" class="gallery-btn" type="button" aria-label="Next image">&gt;</button>
+          </div>
+        </section>
+        <section class="project-modal-content">
+          <h3 id="modalTitle">Project title</h3>
+          <p id="modalDescription" class="muted"></p>
+          <div id="modalLanguages" class="tag-row"></div>
+          <a id="modalRepo" class="button ghost" href="#" target="_blank" rel="noreferrer">Open GitHub Repository</a>
+        </section>
+      </div>
+    </article>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./scripts/data.js"></script>
+  <script src="./scripts/app.js"></script>
 </body>
 </html>
