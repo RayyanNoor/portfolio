@@ -230,6 +230,10 @@ img {
 
 .admin-logout {
   padding: 0.4rem 0.66rem;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  appearance: none;
 }
 
 .main {
