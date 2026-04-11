@@ -914,29 +914,66 @@
   }
 
   function activateSectionNav() {
-    const navLinks = Array.from(document.querySelectorAll(".nav-link[href^='#']"));
+    const nav = document.getElementById("mainNav");
+    if (!nav) return;
+
+    const navLinks = Array.from(nav.querySelectorAll(".nav-link[href^='#']"));
     if (!navLinks.length) return;
 
-    const targets = navLinks
-      .map((link) => document.querySelector(link.getAttribute("href")))
-      .filter(Boolean);
+    const mapped = navLinks
+      .map((link) => {
+        const hash = link.getAttribute("href") || "";
+        const section = hash ? document.querySelector(hash) : null;
+        return { link, hash, section };
+      })
+      .filter((item) => item.section);
 
-    if (!targets.length) return;
+    if (!mapped.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const id = `#${entry.target.id}`;
-          navLinks.forEach((link) => {
-            link.classList.toggle("active", link.getAttribute("href") === id);
-          });
-        });
-      },
-      { threshold: 0.45, rootMargin: "-20% 0px -35% 0px" }
+    const themeSwitch = nav.querySelector(".theme-switch");
+    const ordered = [...mapped].sort(
+      (a, b) => a.section.offsetTop - b.section.offsetTop
     );
 
-    targets.forEach((target) => observer.observe(target));
+    ordered.forEach(({ link }) => {
+      nav.insertBefore(link, themeSwitch || null);
+    });
+
+    function setActive(hash) {
+      navLinks.forEach((link) => {
+        link.classList.toggle("active", link.getAttribute("href") === hash);
+      });
+    }
+
+    function updateActiveByScroll() {
+      const checkpoint = window.scrollY + 120;
+      let activeHash = ordered[0].hash;
+
+      ordered.forEach(({ hash, section }) => {
+        if (section.offsetTop <= checkpoint) {
+          activeHash = hash;
+        }
+      });
+
+      setActive(activeHash);
+    }
+
+    navLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        const hash = link.getAttribute("href") || "";
+        if (hash) setActive(hash);
+      });
+    });
+
+    window.addEventListener("scroll", updateActiveByScroll, { passive: true });
+    window.addEventListener("resize", updateActiveByScroll);
+    window.addEventListener("hashchange", () => {
+      const hash = window.location.hash;
+      if (hash) setActive(hash);
+      updateActiveByScroll();
+    });
+
+    updateActiveByScroll();
   }
 
   function wireRevealAnimations() {
