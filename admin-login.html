@@ -33,7 +33,7 @@
           <p>Enter your admin passcode to open the dashboard.</p>
         </div>
 
-        <form id="adminLoginForm" class="form-grid auth-form">
+        <form id="adminLoginForm" class="form-grid auth-form" method="post" action="/api/admin/login" novalidate>
           <label for="adminPasscode">Passcode
             <input id="adminPasscode" name="passcode" type="password" autocomplete="current-password" required>
           </label>

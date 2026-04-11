@@ -1,7 +1,8 @@
 (function () {
-  const path = window.location.pathname.split("/").pop() || "index.html";
-  const isAdminPage = path === "admin.html";
-  const isLoginPage = path === "admin-login.html";
+  const rawPathname = window.location.pathname || "/";
+  const normalizedPath = rawPathname.replace(/\/+$/, "") || "/";
+  const isAdminPage = /\/admin(?:\.html)?$/i.test(normalizedPath);
+  const isLoginPage = /\/admin-login(?:\.html)?$/i.test(normalizedPath);
 
   async function api(pathname, options = {}) {
     const response = await fetch(pathname, {
@@ -18,8 +19,8 @@
   }
 
   function redirectToLogin() {
-    const next = encodeURIComponent("admin.html");
-    window.location.replace(`admin-login.html?next=${next}`);
+    const next = encodeURIComponent("/admin");
+    window.location.replace(`/admin-login?next=${next}`);
   }
 
   async function checkSession() {
@@ -79,7 +80,8 @@
       }
 
       const params = new URLSearchParams(window.location.search);
-      const next = params.get("next") || "admin.html";
+      const nextParam = (params.get("next") || "").trim();
+      const next = nextParam.startsWith("/") ? nextParam : "/admin";
       window.location.replace(next);
     });
   }
@@ -90,6 +92,15 @@
   };
 
   (async function init() {
+    // If a previous non-JS submit leaked passcode in URL, scrub it from address bar immediately.
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("passcode")) {
+      params.delete("passcode");
+      const query = params.toString();
+      const safeUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash || ""}`;
+      window.history.replaceState({}, "", safeUrl);
+    }
+
     if (isAdminPage) {
       const authenticated = await checkSession();
       if (!authenticated) {
@@ -104,7 +115,8 @@
       const authenticated = await checkSession();
       if (authenticated) {
         const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || "admin.html";
+        const nextParam = (params.get("next") || "").trim();
+        const next = nextParam.startsWith("/") ? nextParam : "/admin";
         window.location.replace(next);
         return;
       }
