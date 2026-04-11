@@ -33,6 +33,8 @@
   const saveProjectLabel = document.getElementById("saveProjectLabel");
   const profileImageFileField = document.getElementById("profileImageFile");
   let uploadedScreenshots = [];
+  let uploadedScreenshotSignatures = new Set();
+  let uploadedScreenshotSignatureByUrl = new Map();
 
   function notify(message) {
     const node = document.getElementById("adminNotice");
@@ -134,13 +136,26 @@
     localStorage.setItem(SYNC_KEY, String(Date.now()));
   }
 
-  function fileToDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("Failed to read file"));
-      reader.readAsDataURL(file);
+  async function uploadImageToServer(file, category) {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("category", category);
+
+    const response = await fetch("/api/admin/upload-image", {
+      method: "POST",
+      credentials: "include",
+      body: formData
     });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body?.url) {
+      throw new Error(body.error || "Image upload failed.");
+    }
+    return String(body.url);
+  }
+
+  function fileSignature(file) {
+    return [file.name, file.size, file.lastModified].join("::");
   }
 
   function parseScreenshots(value) {
@@ -148,10 +163,6 @@
       .split(/\r?\n+/)
       .map((item) => item.trim())
       .filter(Boolean);
-  }
-
-  function isDataUrl(value) {
-    return /^data:image\//i.test(String(value || ""));
   }
 
   function screenshotsFor(project) {
@@ -189,8 +200,13 @@
     const target = all[index];
     if (!target) return;
 
-    if (isDataUrl(target)) {
+    if (uploadedScreenshots.includes(target)) {
       uploadedScreenshots = uploadedScreenshots.filter((item) => item !== target);
+      const signature = uploadedScreenshotSignatureByUrl.get(target);
+      if (signature) {
+        uploadedScreenshotSignatures.delete(signature);
+        uploadedScreenshotSignatureByUrl.delete(target);
+      }
     } else if (shotsField) {
       const manual = parseScreenshots(shotsField.value).filter((item) => item !== target);
       shotsField.value = manual.join("\n");
@@ -216,7 +232,7 @@
           <article class="admin-shot-card">
             <img src="${src}" alt="Screenshot preview ${index + 1}" loading="lazy">
             <div class="admin-shot-meta">
-              <span class="chip">${isDataUrl(src) ? "uploaded" : "manual"}</span>
+              <span class="chip">${uploadedScreenshots.includes(src) ? "uploaded" : "manual"}</span>
               <button class="button danger" type="button" data-remove-shot="${index}">Remove</button>
             </div>
           </article>
@@ -335,6 +351,8 @@
     shotsField.value = "";
     if (shotFilesField) shotFilesField.value = "";
     uploadedScreenshots = [];
+    uploadedScreenshotSignatures = new Set();
+    uploadedScreenshotSignatureByUrl = new Map();
     repoField.value = "";
     featField.checked = false;
     saveProjectLabel.textContent = "Add Project";
@@ -351,10 +369,12 @@
     descField.value = project.description;
     langField.value = project.languages.join(", ");
     const allShots = screenshotsFor(project);
-    const manualShots = allShots.filter((item) => !isDataUrl(item));
-    const uploadedShots = allShots.filter((item) => isDataUrl(item));
+    const manualShots = allShots;
+    const uploadedShots = [];
     shotsField.value = manualShots.join("\n");
     uploadedScreenshots = uploadedShots;
+    uploadedScreenshotSignatures = new Set();
+    uploadedScreenshotSignatureByUrl = new Map();
     if (shotFilesField) shotFilesField.value = "";
     repoField.value = project.repo;
     featField.checked = project.featured;
@@ -379,12 +399,15 @@
       const file = profileImageFileField.files?.[0];
       if (!file) return;
       try {
-        const dataUrl = await fileToDataUrl(file);
-        profileForm.profileImage.value = dataUrl;
-        if (profilePreviewImage) profilePreviewImage.src = dataUrl;
-        notify("Profile image loaded");
-      } catch {
-        notify("Failed to load profile image");
+        notify("Uploading profile image...");
+        const uploadedUrl = await uploadImageToServer(file, "profile");
+        profileForm.profileImage.value = uploadedUrl;
+        if (profilePreviewImage) profilePreviewImage.src = uploadedUrl;
+        notify("Profile image uploaded");
+      } catch (error) {
+        notify(error.message || "Failed to upload profile image");
+      } finally {
+        profileImageFileField.value = "";
       }
     });
   }
@@ -402,35 +425,50 @@
       const files = Array.from(shotFilesField.files || []);
       if (!files.length) return;
       try {
-        const dataUrls = await Promise.all(files.map((file) => fileToDataUrl(file)));
         const manual = parseScreenshots(shotsField.value);
         const existing = new Set([...manual, ...uploadedScreenshots]);
-        const uniqueNew = [];
+        const uniqueFiles = [];
         let duplicateCount = 0;
+        let uploadedCount = 0;
 
-        dataUrls.forEach((url) => {
-          if (existing.has(url)) {
+        files.forEach((file) => {
+          const signature = fileSignature(file);
+          if (uploadedScreenshotSignatures.has(signature)) {
             duplicateCount += 1;
             return;
           }
-          existing.add(url);
-          uniqueNew.push(url);
+          uploadedScreenshotSignatures.add(signature);
+          uniqueFiles.push({ file, signature });
         });
 
-        uploadedScreenshots = [...uploadedScreenshots, ...uniqueNew];
+        if (uniqueFiles.length) {
+          notify(`Uploading ${uniqueFiles.length} screenshot(s)...`);
+        }
 
-        if (duplicateCount > 0 && uniqueNew.length > 0) {
-          notify(`${uniqueNew.length} loaded, ${duplicateCount} duplicate skipped`);
+        for (const entry of uniqueFiles) {
+          const uploadedUrl = await uploadImageToServer(entry.file, "projects");
+          if (existing.has(uploadedUrl)) {
+            duplicateCount += 1;
+            continue;
+          }
+          existing.add(uploadedUrl);
+          uploadedScreenshots.push(uploadedUrl);
+          uploadedScreenshotSignatureByUrl.set(uploadedUrl, entry.signature);
+          uploadedCount += 1;
+        }
+
+        if (duplicateCount > 0 && uploadedCount > 0) {
+          notify(`${uploadedCount} uploaded, ${duplicateCount} duplicate skipped`);
         } else if (duplicateCount > 0) {
           notify(duplicateCount === 1 ? "You already chose this picture" : `You already chose ${duplicateCount} pictures`);
-        } else if (uniqueNew.length > 0) {
-          notify(`${uniqueNew.length} screenshot(s) loaded`);
+        } else if (uploadedCount > 0) {
+          notify(`${uploadedCount} screenshot(s) uploaded`);
         }
 
         updateScreenshotCount();
         renderScreenshotPreview();
-      } catch {
-        notify("Failed to load screenshot(s)");
+      } catch (error) {
+        notify(error.message || "Failed to upload screenshot(s)");
       } finally {
         shotFilesField.value = "";
       }

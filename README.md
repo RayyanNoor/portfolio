@@ -5,6 +5,7 @@ Dynamic portfolio with:
 - Admin dashboard
 - PostgreSQL persistence
 - Server-side admin authentication
+- Cloudinary-backed media uploads
 
 ## Tech Stack
 - Frontend: HTML, CSS, vanilla JS
@@ -18,6 +19,7 @@ Dynamic portfolio with:
 - Changes from admin are visible to all visitors globally
 - Admin auth uses secure server-side passcode hash (`bcrypt`)
 - Passcode can be changed from admin dashboard
+- Profile/project image uploads are stored in Cloudinary URLs
 
 ## Environment Variables
 Create `.env` from `.env.example`:
@@ -27,6 +29,9 @@ PORT=3000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio
 JWT_SECRET=replace-with-a-long-random-secret
 ADMIN_PASSCODE=replace-with-a-strong-passcode
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
 
 ## Local Run
@@ -49,6 +54,9 @@ Open:
   - `DATABASE_URL` (Railway PostgreSQL connection string)
   - `JWT_SECRET` (long random secret)
   - `ADMIN_PASSCODE` (your strong admin passcode)
+  - `CLOUDINARY_CLOUD_NAME`
+  - `CLOUDINARY_API_KEY`
+  - `CLOUDINARY_API_SECRET`
   - `PORT` is optional (Railway injects it automatically).
 3. Railway will run `npm install` and `npm start`.
 4. Open your Railway domain.

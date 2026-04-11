@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const { Pool } = require("pg");
 
 dotenv.config();
@@ -13,6 +15,9 @@ const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const COOKIE_NAME = "portfolio_admin_session";
 const COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 8;
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -27,6 +32,23 @@ if (!JWT_SECRET) {
 
 if (!ADMIN_PASSCODE) {
   throw new Error("Missing ADMIN_PASSCODE in environment.");
+}
+
+const cloudinaryEnabled = Boolean(
+  CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET
+);
+
+if (cloudinaryEnabled) {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+    secure: true
+  });
+} else {
+  console.warn(
+    "Cloudinary credentials missing. Admin uploads will fail until CLOUDINARY_* variables are configured."
+  );
 }
 
 const defaultData = {
@@ -329,6 +351,26 @@ function clearAdminCookie(res) {
   });
 }
 
+function uploadToCloudinary(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(result);
+    });
+    stream.end(buffer);
+  });
+}
+
+function sanitizeFolderSegment(value) {
+  const safe = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, "");
+  return safe || "general";
+}
+
 function requireAdmin(req, res, next) {
   const token = req.cookies[COOKIE_NAME];
   if (!token) {
@@ -349,6 +391,12 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "20mb" }));
 app.use(cookieParser());
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 8 * 1024 * 1024
+  }
+});
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -540,6 +588,46 @@ app.put("/api/admin/portfolio", requireAdmin, async (req, res) => {
   }
 });
 
+app.post("/api/admin/upload-image", requireAdmin, imageUpload.single("image"), async (req, res) => {
+  try {
+    if (!cloudinaryEnabled) {
+      res.status(503).json({ error: "Cloudinary is not configured on the server." });
+      return;
+    }
+
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ error: "Image file is required." });
+      return;
+    }
+
+    if (!/^image\//i.test(file.mimetype || "")) {
+      res.status(400).json({ error: "Only image files are allowed." });
+      return;
+    }
+
+    const category = sanitizeFolderSegment(req.body?.category);
+    const uploadResult = await uploadToCloudinary(file.buffer, {
+      folder: `portfolio/${category}`,
+      resource_type: "image",
+      overwrite: false
+    });
+
+    res.json({
+      ok: true,
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      format: uploadResult.format,
+      bytes: uploadResult.bytes
+    });
+  } catch (error) {
+    console.error("Failed to upload image", error);
+    res.status(500).json({ error: "Failed to upload image." });
+  }
+});
+
 app.post("/api/admin/reset", requireAdmin, async (_req, res) => {
   try {
     const saved = await writePortfolio(defaultData);
@@ -548,6 +636,18 @@ app.post("/api/admin/reset", requireAdmin, async (_req, res) => {
     console.error("Failed to reset portfolio", error);
     res.status(500).json({ error: "Failed to reset portfolio." });
   }
+});
+
+app.use((error, _req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({ error: "Image is too large. Maximum size is 8MB." });
+      return;
+    }
+    res.status(400).json({ error: error.message || "Upload failed." });
+    return;
+  }
+  next(error);
 });
 
 app.use(express.static(process.cwd(), { extensions: ["html"] }));
