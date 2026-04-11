@@ -1525,10 +1525,20 @@ textarea {
 @media (max-width: 760px) {
   .menu-button {
     display: inline-block;
+    border-radius: 999px;
+    padding: 0.46rem 0.86rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: linear-gradient(120deg, #8fb1ef, #7ea2df);
+    color: #f4f8ff;
+    border-color: #88aee8;
+    box-shadow: 0 8px 20px color-mix(in srgb, #88aee8 30%, transparent);
   }
 
   .nav {
-    display: none;
+    display: flex;
     position: absolute;
     top: 74px;
     left: 0;
@@ -1538,10 +1548,20 @@ textarea {
     align-items: flex-start;
     background: color-mix(in srgb, var(--bg) 95%, transparent);
     border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: opacity 220ms ease, transform 240ms ease, max-height 260ms ease;
   }
 
   .nav.open {
-    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 540px;
+    pointer-events: auto;
   }
 
   .theme-switch {

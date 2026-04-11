@@ -178,6 +178,24 @@ async function ensureSchema() {
   if (authResult.rowCount === 0) {
     const hash = await bcrypt.hash(ADMIN_PASSCODE, 12);
     await pool.query("INSERT INTO admin_credentials (id, passcode_hash) VALUES (1, $1)", [hash]);
+  } else {
+    const currentHashResult = await pool.query(
+      "SELECT passcode_hash FROM admin_credentials WHERE id = 1"
+    );
+    const currentHash = currentHashResult.rows[0]?.passcode_hash;
+    const matchesEnvPasscode = currentHash
+      ? await bcrypt.compare(ADMIN_PASSCODE, currentHash)
+      : false;
+
+    // Keep env-admin passcode as source of truth to avoid lockouts after variable changes.
+    if (!matchesEnvPasscode) {
+      const hash = await bcrypt.hash(ADMIN_PASSCODE, 12);
+      await pool.query(
+        "UPDATE admin_credentials SET passcode_hash = $1, updated_at = NOW() WHERE id = 1",
+        [hash]
+      );
+      console.log("Admin passcode hash synchronized from environment variable.");
+    }
   }
 
   const analyticsSettingsResult = await pool.query("SELECT id FROM analytics_settings WHERE id = 1");
