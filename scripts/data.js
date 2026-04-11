@@ -1,5 +1,6 @@
-﻿(function () {
-  const STORAGE_KEY = "rayan_portfolio_data_v1";
+(function () {
+  const CACHE_KEY = "rayan_portfolio_cache_v2";
+  const API_BASE = "";
 
   const defaultData = {
     profile: {
@@ -9,9 +10,12 @@
       heroEyebrow: "AVAILABLE FOR FREELANCE + CONTRACT",
       heroTechs: ["TypeScript", "React", "Node.js", "PostgreSQL", "Docker"],
       role: "Full-Stack Software Engineer",
-      headline: "I build production-grade web platforms with clean architecture, measurable performance, and premium UX.",
-      aboutShort: "I specialize in building scalable products that are fast, maintainable, and business-focused.",
-      aboutLong: "I turn requirements into reliable software systems, from interface architecture to backend services and data design. My engineering process emphasizes code quality, performance, and clear delivery so clients get software that works in production, not just in demos.",
+      headline:
+        "I build production-grade web platforms with clean architecture, measurable performance, and premium UX.",
+      aboutShort:
+        "I specialize in building scalable products that are fast, maintainable, and business-focused.",
+      aboutLong:
+        "I turn requirements into reliable software systems, from interface architecture to backend services and data design. My engineering process emphasizes code quality, performance, and clear delivery so clients get software that works in production, not just in demos.",
       email: "rayan@example.com",
       whatsapp: "966500000000",
       github: "https://github.com/RayyanNoor",
@@ -24,7 +28,8 @@
       {
         id: "portfolio-site",
         title: "Interactive Engineering Portfolio",
-        description: "Single-page portfolio with dynamic project explorer, filters, command console, and dedicated admin dashboard.",
+        description:
+          "Single-page portfolio with dynamic project explorer, filters, command console, and dedicated admin dashboard.",
         languages: ["HTML", "CSS", "JavaScript"],
         screenshot: "./assets/project-placeholder-1.svg",
         screenshots: ["./assets/project-placeholder-1.svg"],
@@ -34,7 +39,8 @@
       {
         id: "analytics-workspace",
         title: "Real-Time Analytics Workspace",
-        description: "Built a dashboard for business metrics with modular components and API-driven data pipelines.",
+        description:
+          "Built a dashboard for business metrics with modular components and API-driven data pipelines.",
         languages: ["React", "TypeScript", "Node.js", "PostgreSQL"],
         screenshot: "./assets/project-placeholder-2.svg",
         screenshots: ["./assets/project-placeholder-2.svg", "./assets/project-placeholder-1.svg"],
@@ -44,7 +50,8 @@
       {
         id: "api-gateway",
         title: "Service Gateway API",
-        description: "Implemented authentication, request validation, rate limiting, and observability for multi-service applications.",
+        description:
+          "Implemented authentication, request validation, rate limiting, and observability for multi-service applications.",
         languages: ["Node.js", "Express", "Redis", "Docker"],
         screenshot: "./assets/project-placeholder-1.svg",
         screenshots: ["./assets/project-placeholder-1.svg"],
@@ -54,8 +61,12 @@
     ]
   };
 
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
   function normalize(data) {
-    if (!data || typeof data !== "object") return structuredClone(defaultData);
+    if (!data || typeof data !== "object") return clone(defaultData);
     const profile = { ...defaultData.profile, ...(data.profile || {}) };
     const projects = Array.isArray(data.projects)
       ? data.projects.map((project, index) => {
@@ -64,6 +75,7 @@
             : project.screenshot
               ? [project.screenshot]
               : ["./assets/project-placeholder-1.svg"];
+
           return {
             id: project.id || `project-${index + 1}`,
             title: project.title || "Untitled Project",
@@ -75,37 +87,96 @@
             featured: Boolean(project.featured)
           };
         })
-      : structuredClone(defaultData.projects);
+      : clone(defaultData.projects);
 
     return { profile, projects };
   }
 
-  function load() {
+  function saveCache(data) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return structuredClone(defaultData);
-      return normalize(JSON.parse(raw));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
     } catch (error) {
-      console.error("Failed to load portfolio data", error);
-      return structuredClone(defaultData);
+      console.warn("Failed to cache portfolio data", error);
     }
   }
 
-  function save(data) {
-    const safeData = normalize(data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
-    return safeData;
+  function loadCache() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      return normalize(JSON.parse(raw));
+    } catch {
+      return null;
+    }
   }
 
-  function reset() {
-    localStorage.removeItem(STORAGE_KEY);
-    return structuredClone(defaultData);
+  let memory = loadCache() || clone(defaultData);
+
+  async function loadRemote() {
+    const response = await fetch(`${API_BASE}/api/portfolio`, {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to load portfolio data from API.");
+    }
+
+    const body = await response.json();
+    memory = normalize(body.content);
+    saveCache(memory);
+    return clone(memory);
+  }
+
+  function load() {
+    return clone(memory);
+  }
+
+  async function save(data) {
+    const safe = normalize(data);
+    const response = await fetch(`${API_BASE}/api/admin/portfolio`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ content: safe })
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || "Failed to save portfolio data.");
+    }
+
+    const body = await response.json();
+    memory = normalize(body.content);
+    saveCache(memory);
+    return clone(memory);
+  }
+
+  async function reset() {
+    const response = await fetch(`${API_BASE}/api/admin/reset`, {
+      method: "POST",
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || "Failed to reset portfolio data.");
+    }
+
+    const body = await response.json();
+    memory = normalize(body.content);
+    saveCache(memory);
+    return clone(memory);
   }
 
   window.PortfolioData = {
-    STORAGE_KEY,
+    CACHE_KEY,
     defaultData,
+    normalize,
     load,
+    loadRemote,
     save,
     reset
   };

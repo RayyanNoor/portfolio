@@ -1,36 +1,64 @@
-﻿# Rayan Portfolio
+# Rayan Portfolio
 
-Production-ready one-page programmer portfolio with a separate admin dashboard.
+Dynamic portfolio with:
+- Public client page
+- Admin dashboard
+- PostgreSQL persistence
+- Server-side admin authentication
 
-## Public Features
-- Single-page flow: Home, About, Projects, Console, Contact
-- Searchable and filterable project explorer
-- Dynamic language cloud and animated engineering metrics
-- Interactive command console with quick actions
-- Click-to-contact actions for WhatsApp and email
-- Smooth transitions and responsive layout
+## Tech Stack
+- Frontend: HTML, CSS, vanilla JS
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Deploy target: Railway
 
-## Admin
-- `admin-login.html` is the admin entry route
-- `admin.html` is protected by a login gate
-- Passkey is owner-managed; login page does not allow passkey creation
-- PBKDF2 hash + salt verification, lockout after failed attempts, and session expiry are enabled
-- Passkey can be changed from the admin Profile -> Security section after login
-- Edit mode is locked by default; you must enable edit mode before changes are allowed
-- Manage profile and projects with localStorage-backed forms, including image file uploads
+## Features
+- Client pages read data from `/api/portfolio`
+- Admin edits write directly to PostgreSQL
+- Changes from admin are visible to all visitors globally
+- Admin auth uses secure server-side passcode hash (`bcrypt`)
+- Passcode can be changed from admin dashboard
+
+## Environment Variables
+Create `.env` from `.env.example`:
+
+```env
+PORT=3000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio
+JWT_SECRET=replace-with-a-long-random-secret
+ADMIN_PASSCODE=replace-with-a-strong-passcode
+```
 
 ## Local Run
 ```powershell
 cd C:\Users\rayya\portfolio
-python -m http.server 5500
+npm install
+npm start
 ```
+
 Open:
-- Public: `http://localhost:5500/`
-- Admin Login: `http://localhost:5500/admin-login.html`
+- Public: `http://localhost:3000/`
+- Admin Login: `http://localhost:3000/admin-login.html`
 
-## Deploy
-1. Push `main` to GitHub
-2. Enable GitHub Pages from `main` and `/ (root)`
+## Railway Deployment (App + PostgreSQL)
+1. Push this repo to GitHub.
+2. In Railway:
+- Create a new project from your GitHub repo.
+- Add a PostgreSQL service.
+- In your app service Variables, set:
+  - `DATABASE_URL` (Railway PostgreSQL connection string)
+  - `JWT_SECRET` (long random secret)
+  - `ADMIN_PASSCODE` (your strong admin passcode)
+  - `PORT` is optional (Railway injects it automatically).
+3. Railway will run `npm install` and `npm start`.
+4. Open your Railway domain.
 
-## Persistence Note
-Admin edits are saved to browser localStorage. For permanent content, update defaults in `scripts/data.js` and push.
+## Routes
+- Public portfolio: `/`
+- Admin login: `/admin-login.html`
+- Admin dashboard: `/admin.html`
+
+## Security Notes
+- Do not commit `.env`.
+- Use a strong `ADMIN_PASSCODE` (12+ chars).
+- Use a strong random `JWT_SECRET`.

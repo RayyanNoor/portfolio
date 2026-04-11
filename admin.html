@@ -19,6 +19,7 @@
         <a class="nav-link" href="#admin-overview">Overview</a>
         <a class="nav-link" href="#admin-profile">Profile</a>
         <a class="nav-link" href="#admin-projects">Projects</a>
+        <a class="nav-link" href="#admin-analytics">Analytics</a>
         <a class="nav-link" href="#admin-editor">Editor</a>
         <button id="adminLogoutBtn" class="button ghost admin-logout" type="button">Logout</button>
         <div class="theme-switch" role="group" aria-label="Theme mode">
@@ -42,7 +43,38 @@
           <span id="editModeState" class="muted">View mode: editing is locked.</span>
         </div>
         <p id="adminSaveBanner" class="admin-save-banner" aria-live="polite"></p>
-        <p class="muted">This dashboard stores changes in your browser using localStorage. For deployment, update the defaults in <code>scripts/data.js</code> after finalizing content.</p>
+        <p class="muted">This dashboard saves updates to your shared database so all visitors see latest content.</p>
+      </section>
+
+      <section id="admin-analytics" class="panel section section-anchor">
+        <div class="section-head">
+          <h2>Analytics</h2>
+          <p>Track visits and behavior. Choose what is visible on the public site.</p>
+        </div>
+
+        <div class="button-row">
+          <button id="analyticsRefreshBtn" class="button ghost" type="button">Refresh Analytics</button>
+        </div>
+
+        <div class="metrics">
+          <article class="metric-card panel"><p>Total Visits</p><strong id="analyticsTotalVisits">0</strong></article>
+          <article class="metric-card panel"><p>Unique Visitors</p><strong id="analyticsUniqueVisitors">0</strong></article>
+          <article class="metric-card panel"><p>Project Previews</p><strong id="analyticsProjectPreviews">0</strong></article>
+          <article class="metric-card panel"><p>Contact Clicks</p><strong id="analyticsContactClicks">0</strong></article>
+        </div>
+
+        <form id="analyticsVisibilityForm" class="form-grid">
+          <label class="toggle"><input id="showTotalVisits" type="checkbox"><span class="toggle-ui" aria-hidden="true"></span><span>Show Total Visits on client side</span></label>
+          <label class="toggle"><input id="showUniqueVisitors" type="checkbox"><span class="toggle-ui" aria-hidden="true"></span><span>Show Unique Visitors on client side</span></label>
+          <label class="toggle"><input id="showProjectPreviews" type="checkbox"><span class="toggle-ui" aria-hidden="true"></span><span>Show Project Previews on client side</span></label>
+          <label class="toggle"><input id="showContactClicks" type="checkbox"><span class="toggle-ui" aria-hidden="true"></span><span>Show Contact Clicks on client side</span></label>
+          <div class="button-row">
+            <button class="button primary" type="submit">Save Visibility Settings</button>
+          </div>
+        </form>
+
+        <h3>Recent Visitor Activity</h3>
+        <div id="analyticsEventsList" class="admin-events-list muted">No analytics events yet.</div>
       </section>
 
       <section id="admin-profile" class="panel section section-anchor">

@@ -13,6 +13,8 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const galleryTimers = [];
   const PROJECTS_PER_PAGE = 4;
+  const VISITOR_KEY = "rayan_portfolio_visitor_id";
+  let pageViewTracked = false;
 
   function resolvedTheme(mode) {
     if (mode === "light" || mode === "dark") return mode;
@@ -149,6 +151,75 @@
     window.toastTimer = setTimeout(() => toast.classList.remove("show"), 1700);
   }
 
+  function getVisitorId() {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (id) return id;
+    id = (crypto.randomUUID
+      ? crypto.randomUUID()
+      : `visitor-${Date.now()}-${Math.random().toString(16).slice(2)}`).slice(0, 80);
+    localStorage.setItem(VISITOR_KEY, id);
+    return id;
+  }
+
+  async function trackEvent(eventType, meta = {}) {
+    try {
+      await fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          visitorId: getVisitorId(),
+          eventType,
+          path: window.location.pathname + window.location.hash,
+          meta
+        })
+      });
+    } catch {
+      // Analytics should not break UI.
+    }
+  }
+
+  async function renderPublicAnalytics() {
+    const section = document.getElementById("publicStatsSection");
+    const grid = document.getElementById("publicStatsGrid");
+    if (!section || !grid) return;
+
+    try {
+      const response = await fetch("/api/analytics/public");
+      if (!response.ok) throw new Error("Failed to load analytics");
+      const body = await response.json();
+      const stats = body?.stats || {};
+      const entries = Object.entries(stats);
+
+      if (!entries.length) {
+        section.hidden = true;
+        grid.innerHTML = "";
+        return;
+      }
+
+      const labels = {
+        totalVisits: "Total Visits",
+        uniqueVisitors: "Unique Visitors",
+        projectPreviews: "Project Previews",
+        contactClicks: "Contact Clicks"
+      };
+
+      grid.innerHTML = entries
+        .map(
+          ([key, value]) => `
+            <article class="metric-card panel">
+              <p>${labels[key] || key}</p>
+              <strong>${Number(value || 0)}</strong>
+            </article>
+          `
+        )
+        .join("");
+      section.hidden = false;
+    } catch {
+      section.hidden = true;
+      grid.innerHTML = "";
+    }
+  }
+
   function normalizeText(input) {
     return String(input || "").trim().toLowerCase();
   }
@@ -167,7 +238,12 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }
 
-  function reloadState() {
+  async function reloadState() {
+    try {
+      await dataApi.loadRemote();
+    } catch (error) {
+      console.warn("Using cached portfolio data.", error);
+    }
     state = dataApi.load();
   }
 
@@ -385,6 +461,7 @@
     function openModal(projectId) {
       const project = state.projects.find((item) => item.id === projectId);
       if (!project) return;
+      void trackEvent("project_preview", { projectId });
       currentProject = project;
       currentIndex = 0;
 
@@ -637,14 +714,15 @@
       .join("");
   }
 
-  function refreshRenderedContent() {
-    reloadState();
+  async function refreshRenderedContent() {
+    await reloadState();
     applyProfile();
     renderLanguageCloud();
     renderSortPills();
     renderFilters();
     renderProjects();
     renderMetrics();
+    await renderPublicAnalytics();
   }
 
   function animateMetric(id, target) {
@@ -724,12 +802,40 @@
     button.addEventListener("click", async () => {
       const email = state.profile.email;
       if (!email) return;
+      void trackEvent("contact_click", { channel: "copy_email" });
       try {
         await navigator.clipboard.writeText(email);
         showToast("Email copied");
       } catch {
         showToast("Could not copy email");
       }
+    });
+  }
+
+  function wireContactTracking() {
+    const channels = [
+      { selector: "[data-profile='whatsapp']", channel: "whatsapp" },
+      { selector: "[data-profile='email']", channel: "email" },
+      { selector: "[data-profile='github']", channel: "github" }
+    ];
+
+    channels.forEach(({ selector, channel }) => {
+      document.querySelectorAll(selector).forEach((node) => {
+        node.addEventListener("click", () => {
+          void trackEvent("contact_click", { channel });
+        });
+      });
+    });
+
+    const projectsGrid = document.getElementById("projectsGrid");
+    if (!projectsGrid) return;
+
+    projectsGrid.addEventListener("click", (event) => {
+      const link = event.target.closest("a.button.ghost");
+      if (!link) return;
+      const card = event.target.closest("[data-preview-card]");
+      const projectId = card?.dataset.previewCard || "unknown";
+      void trackEvent("project_repo_click", { projectId });
     });
   }
 
@@ -785,6 +891,7 @@
       print(`$ ${command}`);
 
       if (commands[command]) {
+        void trackEvent("console_command", { command });
         commands[command]();
       } else {
         print(`Unknown command: ${command}. Type 'help'.`, "output");
@@ -874,13 +981,13 @@
 
   function wireAdminSyncRefresh() {
     window.addEventListener("storage", (event) => {
-      if (event.key === SYNC_KEY || event.key === dataApi.STORAGE_KEY) {
-        refreshRenderedContent();
+      if (event.key === SYNC_KEY || event.key === dataApi.CACHE_KEY) {
+        void refreshRenderedContent();
       }
     });
 
     window.addEventListener("focus", () => {
-      refreshRenderedContent();
+      void refreshRenderedContent();
     });
   }
 
@@ -888,13 +995,6 @@
   wireScrollProgress();
   wireCursorGlow();
   wireHeroParallax();
-  applyProfile();
-  renderLanguageCloud();
-  renderSortPills();
-  renderFilters();
-  renderProjects();
-  wireCardTilt();
-  renderMetrics();
   wireExplorerTools();
   wireCopyEmail();
   wireConsole();
@@ -903,4 +1003,10 @@
   wireRevealAnimations();
   wireAdminSyncRefresh();
   wireProjectPreviewModal();
+  wireContactTracking();
+  void refreshRenderedContent();
+  if (!pageViewTracked) {
+    pageViewTracked = true;
+    void trackEvent("page_view", { hash: window.location.hash || "#home" });
+  }
 })();

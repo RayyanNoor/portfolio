@@ -13,6 +13,9 @@
   const resetButton = document.getElementById("resetData");
   const toggleEditModeBtn = document.getElementById("toggleEditMode");
   const editModeState = document.getElementById("editModeState");
+  const analyticsRefreshBtn = document.getElementById("analyticsRefreshBtn");
+  const analyticsVisibilityForm = document.getElementById("analyticsVisibilityForm");
+  const analyticsEventsList = document.getElementById("analyticsEventsList");
 
   if (!profileForm || !projectForm || !projectList) return;
 
@@ -60,8 +63,74 @@
     setTimeout(() => section.classList.remove("admin-section-saved"), 1100);
   }
 
-  function saveState() {
-    dataApi.save(state);
+  async function fetchAnalyticsSummary() {
+    const response = await fetch("/api/admin/analytics/summary", {
+      method: "GET",
+      credentials: "include"
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.error || "Failed to load analytics");
+    }
+    return body;
+  }
+
+  async function saveAnalyticsSettings(settings) {
+    const response = await fetch("/api/admin/analytics/settings", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings })
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.error || "Failed to save analytics settings");
+    }
+    return body.settings || settings;
+  }
+
+  function renderAnalytics(data) {
+    const totals = data?.totals || {};
+    const settings = data?.settings || {};
+    const events = Array.isArray(data?.events) ? data.events : [];
+
+    const map = {
+      analyticsTotalVisits: totals.totalVisits || 0,
+      analyticsUniqueVisitors: totals.uniqueVisitors || 0,
+      analyticsProjectPreviews: totals.projectPreviews || 0,
+      analyticsContactClicks: totals.contactClicks || 0
+    };
+
+    Object.entries(map).forEach(([id, value]) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = String(value);
+    });
+
+    if (analyticsVisibilityForm) {
+      const names = ["showTotalVisits", "showUniqueVisitors", "showProjectPreviews", "showContactClicks"];
+      names.forEach((name) => {
+        const input = analyticsVisibilityForm.querySelector(`#${name}`);
+        if (input) input.checked = Boolean(settings[name]);
+      });
+    }
+
+    if (analyticsEventsList) {
+      if (!events.length) {
+        analyticsEventsList.innerHTML = "No analytics events yet.";
+        return;
+      }
+      analyticsEventsList.innerHTML = events
+        .map((event) => {
+          const when = new Date(event.createdAt).toLocaleString();
+          const meta = event.meta && Object.keys(event.meta).length ? ` | ${JSON.stringify(event.meta)}` : "";
+          return `<p><strong>${event.visitorId}</strong> -> ${event.eventType} @ ${event.path}${meta} <span class="muted">(${when})</span></p>`;
+        })
+        .join("");
+    }
+  }
+
+  async function saveState() {
+    await dataApi.save(state);
     localStorage.setItem(SYNC_KEY, String(Date.now()));
   }
 
@@ -190,7 +259,7 @@
     editMode = enabled;
 
     const controls = document.querySelectorAll(
-      "#profileForm input, #profileForm textarea, #profileForm button, #passkeyForm input, #passkeyForm button, #projectForm input, #projectForm textarea, #projectForm button, [data-edit], [data-delete], #resetData"
+      "#profileForm input, #profileForm textarea, #profileForm button, #passkeyForm input, #passkeyForm button, #projectForm input, #projectForm textarea, #projectForm button, #analyticsVisibilityForm input, #analyticsVisibilityForm button, [data-edit], [data-delete], #resetData"
     );
 
     controls.forEach((node) => {
@@ -245,9 +314,13 @@
     });
 
     projectList.querySelectorAll("[data-delete]").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", async () => {
         if (!editMode) return;
-        deleteProject(button.dataset.delete);
+        try {
+          await deleteProject(button.dataset.delete);
+        } catch (error) {
+          notify(error.message || "Failed to delete project");
+        }
       });
     });
 
@@ -291,11 +364,11 @@
     projectForm.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function deleteProject(id) {
+  async function deleteProject(id) {
     const index = state.projects.findIndex((item) => item.id === id);
     if (index < 0) return;
     state.projects.splice(index, 1);
-    saveState();
+    await saveState();
     syncProjectList();
     notify("Project deleted");
   }
@@ -364,7 +437,7 @@
     });
   }
 
-  profileForm.addEventListener("submit", (event) => {
+  profileForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!editMode) return;
 
@@ -390,13 +463,17 @@
       footerNote: profileForm.footerNote.value.trim()
     };
 
-    saveState();
-    notify("Profile updated");
-    showSaveBanner("Profile saved and synced");
-    pulseSection("admin-profile");
+    try {
+      await saveState();
+      notify("Profile updated");
+      showSaveBanner("Profile saved to database");
+      pulseSection("admin-profile");
+    } catch (error) {
+      notify(error.message || "Failed to save profile");
+    }
   });
 
-  projectForm.addEventListener("submit", (event) => {
+  projectForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!editMode) return;
 
@@ -425,11 +502,15 @@
       notify("Project added");
     }
 
-    saveState();
-    syncProjectList();
-    clearProjectForm();
-    showSaveBanner("Project changes saved and synced");
-    pulseSection("admin-projects");
+    try {
+      await saveState();
+      syncProjectList();
+      clearProjectForm();
+      showSaveBanner("Project changes saved to database");
+      pulseSection("admin-projects");
+    } catch (error) {
+      notify(error.message || "Failed to save project");
+    }
   });
 
   document.getElementById("clearProjectForm").addEventListener("click", () => {
@@ -438,23 +519,60 @@
   });
 
   if (resetButton) {
-    resetButton.addEventListener("click", () => {
+    resetButton.addEventListener("click", async () => {
       if (!editMode) return;
-      const resetData = dataApi.reset();
-      state.profile = resetData.profile;
-      state.projects = resetData.projects;
-      syncProfileForm();
-      syncProjectList();
-      clearProjectForm();
-      notify("Reset to default data");
-      showSaveBanner("Data reset and synced");
-      pulseSection("admin-overview");
+      try {
+        const resetData = await dataApi.reset();
+        state.profile = resetData.profile;
+        state.projects = resetData.projects;
+        syncProfileForm();
+        syncProjectList();
+        clearProjectForm();
+        notify("Reset to default data");
+        showSaveBanner("Data reset in database");
+        pulseSection("admin-overview");
+      } catch (error) {
+        notify(error.message || "Failed to reset data");
+      }
     });
   }
 
   if (toggleEditModeBtn) {
     toggleEditModeBtn.addEventListener("click", () => {
       setEditMode(!editMode);
+    });
+  }
+
+  if (analyticsRefreshBtn) {
+    analyticsRefreshBtn.addEventListener("click", async () => {
+      try {
+        const summary = await fetchAnalyticsSummary();
+        renderAnalytics(summary);
+        notify("Analytics refreshed");
+      } catch (error) {
+        notify(error.message || "Failed to refresh analytics");
+      }
+    });
+  }
+
+  if (analyticsVisibilityForm) {
+    analyticsVisibilityForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!editMode) return;
+      const settings = {
+        showTotalVisits: Boolean(document.getElementById("showTotalVisits")?.checked),
+        showUniqueVisitors: Boolean(document.getElementById("showUniqueVisitors")?.checked),
+        showProjectPreviews: Boolean(document.getElementById("showProjectPreviews")?.checked),
+        showContactClicks: Boolean(document.getElementById("showContactClicks")?.checked)
+      };
+      try {
+        await saveAnalyticsSettings(settings);
+        notify("Analytics visibility settings saved");
+        showSaveBanner("Analytics visibility updated");
+        pulseSection("admin-analytics");
+      } catch (error) {
+        notify(error.message || "Failed to save analytics visibility");
+      }
     });
   }
 
@@ -489,9 +607,20 @@
     });
   }
 
-  syncProfileForm();
-  syncProjectList();
-  clearProjectForm();
-  renderScreenshotPreview();
-  setEditMode(false);
+  (async function init() {
+    try {
+      const [remote, analytics] = await Promise.all([dataApi.loadRemote(), fetchAnalyticsSummary()]);
+      state.profile = remote.profile;
+      state.projects = remote.projects;
+      renderAnalytics(analytics);
+    } catch {
+      notify("Could not load remote data. Showing cached data.");
+    }
+
+    syncProfileForm();
+    syncProjectList();
+    clearProjectForm();
+    renderScreenshotPreview();
+    setEditMode(false);
+  })();
 })();
