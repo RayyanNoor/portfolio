@@ -350,8 +350,13 @@
     projectList.querySelectorAll("[data-delete]").forEach((button) => {
       button.addEventListener("click", async () => {
         if (!editMode) return;
+        const projectId = button.dataset.delete;
+        const project = state.projects.find((item) => item.id === projectId);
+        const label = project?.title ? `"${project.title}"` : "this project";
+        const confirmed = window.confirm(`Are you sure you want to delete ${label}?`);
+        if (!confirmed) return;
         try {
-          await deleteProject(button.dataset.delete);
+          await deleteProject(projectId);
         } catch (error) {
           notify(error.message || "Failed to delete project");
         }
