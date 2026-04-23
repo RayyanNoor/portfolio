@@ -119,7 +119,7 @@
         <div class="explorer-tools">
           <label class="search-wrap" for="projectSearch">
             <span>Search</span>
-            <input id="projectSearch" type="search" placeholder="Search by title, language, or description" autocomplete="off">
+            <input id="projectSearch" type="search" placeholder="Search by title, technology, or description" autocomplete="off">
           </label>
 
           <div class="sort-wrap">
@@ -132,7 +132,7 @@
           </div>
         </div>
 
-        <div id="stackFilters" class="stack-filters" aria-label="Language filters"></div>
+        <div id="stackFilters" class="stack-filters" aria-label="Technology filters"></div>
 
         <div id="projectsGrid" class="project-grid"></div>
         <div id="projectsPagination" class="projects-pagination" aria-label="Projects pagination"></div>
@@ -202,6 +202,7 @@
         <section class="project-modal-content">
           <h3 id="modalTitle">Project title</h3>
           <p id="modalDescription" class="muted"></p>
+          <p class="muted">Technologies</p>
           <div id="modalLanguages" class="tag-row"></div>
           <a id="modalRepo" class="button ghost" href="#" target="_blank" rel="noreferrer">Open GitHub Repository</a>
         </section>
