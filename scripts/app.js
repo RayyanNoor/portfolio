@@ -250,7 +250,8 @@
   function applyProfile() {
     const { profile } = state;
 
-    document.title = `${profile.name} | Software Engineer`;
+    const tabRole = String(profile.navRole || "Software Developer").trim() || "Software Developer";
+    document.title = `${profile.name} | ${tabRole}`;
     setText("navName", profile.name);
     setText("navRole", profile.navRole);
     setText("heroName", profile.name);
