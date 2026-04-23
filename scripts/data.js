@@ -112,6 +112,11 @@
 
   let memory = loadCache() || clone(defaultData);
 
+  function handleUnauthorized() {
+    const next = encodeURIComponent("/admin");
+    window.location.replace(`/admin-login?next=${next}`);
+  }
+
   async function loadRemote() {
     const response = await fetch(`${API_BASE}/api/portfolio`, {
       method: "GET",
@@ -143,6 +148,11 @@
       body: JSON.stringify({ content: safe })
     });
 
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("Session expired. Please log in again.");
+    }
+
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       throw new Error(body.error || "Failed to save portfolio data.");
@@ -159,6 +169,11 @@
       method: "POST",
       credentials: "include"
     });
+
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("Session expired. Please log in again.");
+    }
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));

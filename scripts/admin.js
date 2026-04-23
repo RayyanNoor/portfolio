@@ -36,6 +36,11 @@
   let uploadedScreenshotSignatures = new Set();
   let uploadedScreenshotSignatureByUrl = new Map();
 
+  function handleUnauthorized() {
+    const next = encodeURIComponent("/admin");
+    window.location.replace(`/admin-login?next=${next}`);
+  }
+
   function notify(message) {
     const node = document.getElementById("adminNotice");
     if (!node) return;
@@ -70,6 +75,10 @@
       method: "GET",
       credentials: "include"
     });
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("Session expired. Please log in again.");
+    }
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(body.error || "Failed to load analytics");
@@ -84,6 +93,10 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ settings })
     });
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("Session expired. Please log in again.");
+    }
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(body.error || "Failed to save analytics settings");
@@ -146,6 +159,11 @@
       credentials: "include",
       body: formData
     });
+
+    if (response.status === 401) {
+      handleUnauthorized();
+      throw new Error("Session expired. Please log in again.");
+    }
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok || !body?.url) {

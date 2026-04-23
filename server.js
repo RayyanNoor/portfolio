@@ -379,7 +379,10 @@ function requireAdmin(req, res, next) {
   }
 
   try {
-    req.admin = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, { clockTolerance: 30 });
+    req.admin = payload;
+    // Rolling admin session so active edits don't suddenly fail on expiry.
+    setAdminCookie(res, { role: payload?.role || "admin" });
     next();
   } catch {
     clearAdminCookie(res);
@@ -508,7 +511,8 @@ app.get("/api/admin/session", (req, res) => {
     return;
   }
   try {
-    jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, { clockTolerance: 30 });
+    setAdminCookie(res, { role: payload?.role || "admin" });
     res.json({ authenticated: true });
   } catch {
     clearAdminCookie(res);
